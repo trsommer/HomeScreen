@@ -26,7 +26,28 @@
     </div>
     <div id="newServiceFormContainer">
         <div id="newServiceForm">
-
+            <div id="barTop">
+                <div id="buttonClose" class="barTopButton"></div>
+                <div id="buttonMinimize" class="barTopButton"></div>
+                <div id="buttonMaximize" class="barTopButton"></div>
+            </div>
+            <div id="dashboardColumnButtonContainer">
+                <div id="dashboardColumnButtons">
+                </div>
+                <div id="dashboardColumnButtonsInactive">
+                </div>
+            </div>
+            <div id="dashboardColumnContent">
+                <div id="dashboardColumnLeft">
+                </div>
+                <div id="dashboardColumnRight">
+                    <h2 id="edit_heading">Edit</h2>
+                    <input type="text" id="input_title" class="input_text" placeholder="Title" disabled>
+                    <input type="text" id="input_icon" class="input_text" placeholder="Icon" disabled>
+                    <input type="text" id="input_url" class="input_text" placeholder="URL" disabled>
+                    <input type="button" value="save all changes" id="button_save" onclick="saveInputData()">
+                </div>
+            </div>
         </div>
     </div>
     <div id="background">

@@ -1,6 +1,8 @@
 var menuInfo = null
 var menuHTMLReference = []
 var newOrderGlobal = []
+var tempData = null
+var currentEdit = null
 
 async function fetchJSON() {
     // Fetch the JSON file
@@ -160,4 +162,207 @@ async function createDashboard() {
     data = await fetchJSON();
     populateData(data);
     await addDragAndDrop();
+    await spawnDashboardEditWindow(data);
+}
+
+async function spawnDashboardEditWindow(data) {
+    tempData = structuredClone(data);
+    var menuItems = tempData.menuItems
+    var editContainer = document.getElementById('dashboardColumnButtons');
+    var editInactiveContainer = document.getElementById('dashboardColumnButtonsInactive');
+
+    for (let i = 0; i < menuItems.length; i++) {
+        const menuItem = menuItems[i];
+        div = document.createElement('div');
+        div.classList.add('dashboardColumnButton');
+        div.classList.add('dashboardColumnButtonsContent');
+        
+        pElement = document.createElement('p');
+        pElement.innerHTML = menuItem.title;
+
+        div.appendChild(pElement);
+
+        div.addEventListener('click', function() {
+            openColoumnEdit(menuItem, i)
+        });
+
+        editContainer.appendChild(div);
+    }
+
+    inactiveLength = 7 - menuItems.length
+
+    for (let i = 0; i < inactiveLength; i++) {
+        div = document.createElement('div');
+        div.classList.add('dashboardColumnButton');
+        editInactiveContainer.appendChild(div);
+    }
+
+    addDiv = document.createElement('div');
+    addDiv.classList.add('dashboardColumnButton');
+    addDiv.classList.add('dashboardColumnButtonsContent');
+    pElement = document.createElement('p');
+    pElement.innerHTML = "Add Column";
+    addDiv.appendChild(pElement);
+    editInactiveContainer.appendChild(addDiv);
+    
+    addDiv.addEventListener('click', function() {
+        if (editContainer.children.length == 7) {
+            return
+        }
+        //remove first child from inactive
+        editInactiveContainer.removeChild(editInactiveContainer.children[0]);
+        newDiv = document.createElement('div');
+        newDiv.classList.add('dashboardColumnButton');
+        newDiv.classList.add('dashboardColumnButtonsContent');
+        newPElement = document.createElement('p');
+        newPElement.innerHTML = "new column";
+        newDiv.appendChild(newPElement);
+        editContainer.appendChild(newDiv);
+    });
+
+    await Sortable.create(editContainer, {
+        group: "editGroup",
+        animation: 150
+    });
+}
+
+function openColoumnEdit(tempData, index) {
+    links = tempData.links
+    linkContainer = document.getElementById('dashboardColumnLeft');
+    linkContainer.innerHTML = "";
+    inputs = document.getElementsByClassName('input_text');
+    currentEdit = {
+        "type" : "coloumn",
+        "coloumn" : index,
+        "link" : null
+    }
+
+    for (let i = 0; i < links.length; i++) {
+        const link = links[i];
+        div = document.createElement('div');
+        pElement = document.createElement('p');
+        pElement.innerHTML = link.title;
+
+        div.appendChild(pElement);
+
+        div.addEventListener('click', function() {
+            currentEdit = {
+                "type" : "row",
+                "coloumn" : index,
+                "link" : i
+            }
+        
+            for (let i = 0; i < 3; i++) {
+                const input = inputs[i];
+                switch (i) {
+                    case 0:
+                        input.disabled = false;
+                        input.value = link.title;
+                        break;
+                    case 1:
+                        input.disabled = false;
+                        input.value = link.icon;
+                        break;
+                    case 2:
+                        input.disabled = false;
+                        input.value = link.url;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            
+        });
+
+        linkContainer.appendChild(div);
+    }
+
+    if (links.length < 7) {
+        addDiv = document.createElement('div');
+        pElement = document.createElement('p');
+        pElement.innerHTML = "new link";
+
+        addDiv.addEventListener('click', function() {
+            links.push({
+                "title" : "new link",
+                "icon" : "fas fa-link",
+                "url" : "url"
+            });
+            for (let i = 0; i < 3; i++) {
+                const input = inputs[i];
+                switch (i) {
+                    case 0:
+                        input.disabled = false;
+                        input.value = "new link";
+                        break;
+                    case 1:
+                        input.disabled = false;
+                        input.value = "fas fa-link";
+                        break;
+                    case 2:
+                        input.disabled = false;
+                        input.value = "url";
+                        break;
+                    default:
+                        break;
+                }
+            }
+            currentEdit = {
+                "type" : "row",
+                "coloumn" : index,
+                "link" : links.length - 1
+            };
+        });
+
+        addDiv.appendChild(pElement);
+        linkContainer.appendChild(addDiv);
+    }
+
+    for (let i = 0; i < 3; i++) {
+        const input = inputs[i];
+        switch (i) {
+            case 0:
+                input.disabled = false;
+                input.value = tempData.title;
+                break;
+            case 1:
+                input.disabled = false;
+                input.value = tempData.icon_fa;
+                break;
+            case 2:
+                input.disabled = true;
+                input.value = "";
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+function saveInputData() {
+    if (currentEdit == null) {
+        return
+    }
+
+    inputs = document.getElementsByClassName('input_text');
+    newTitle = inputs[0].value;
+    newIcon = inputs[1].value;
+    newUrl = inputs[2].value;
+    var coloumnIndex = currentEdit.coloumn
+    coloumn = tempData.menuItems[coloumnIndex]
+
+    if (currentEdit.type == "coloumn") {
+        coloumn.title = newTitle;
+        coloumn.icon_fa = newIcon;
+    } else {
+        link = coloumn.links[currentEdit.link]
+        link.title = newTitle;
+        link.icon = newIcon;
+        link.url = newUrl;
+    }
+
+    console.log(tempData);
+
+    openColoumnEdit(coloumn, coloumnIndex);
 }
