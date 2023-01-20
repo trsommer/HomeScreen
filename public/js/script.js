@@ -2,10 +2,9 @@ var menuInfo = null
 var menuHTMLReference = []
 var newOrderGlobal = []
 var tempData = null
-var currentEdit = null
-var currentColoumnItems = null
-var currentColoumnSelected = null
-var currentLinkSelected = null
+var inputTarget = null
+var dashBoardColumnButtonsHTML = []
+var dashBoardInactiveColumnButtonsHTML = []
 
 async function fetchJSON() {
     // Fetch the JSON file
@@ -163,7 +162,7 @@ async function updateJSON() {
 }
 
 async function createDashboard() {
-    data = await fetchJSON();
+    const data = await fetchJSON();
     populateData(data);
     await addDragAndDrop();
     await spawnDashboardEditWindow(data);
@@ -171,299 +170,271 @@ async function createDashboard() {
 
 async function spawnDashboardEditWindow(data) {
     tempData = structuredClone(data);
-    var menuItems = tempData.menuItems
-    var editContainer = document.getElementById('dashboardColumnButtons');
-    editContainer.innerHTML = null
-    var editInactiveContainer = document.getElementById('dashboardColumnButtonsInactive');
-    editInactiveContainer.innerHTML = null
-    inputs = document.getElementsByClassName('input_text');
+    const menuItems = tempData.menuItems;
+    const dashboardColumnButtonContainer = document.getElementById('dashboardColumnButtons');
+    const addColumnButton = document.getElementById('addColumnButton');
 
-    for (let i = 0; i < menuItems.length; i++) {
-        const menuItem = menuItems[i];
-        const div = document.createElement('div');
-        div.classList.add('dashboardColumnButton');
-        if (currentColoumnSelected == i) {
-            div.classList.add('dashboardColumnButtonActivated')
-        } else {
-            div.classList.add('dashboardColumnButtonsContent');
-        }
-        pElement = document.createElement('p');
-        pElement.innerHTML = menuItem.title;
-
-        div.appendChild(pElement);
-
-        div.addEventListener('click', function() {
-            if (currentEdit != null) {
-                saveInputData();
-            }
-            currentColoumnSelected = i;
-            spawnDashboardEditWindow(tempData);
-            openColoumnEdit(menuItem, i)
-            setInitialColoumnData(menuItem, i);
-        });
-
-        editContainer.appendChild(div);
-    }
-
-    inactiveLength = 7 - menuItems.length
-
-    for (let i = 0; i < inactiveLength; i++) {
-        div = document.createElement('div');
-        div.classList.add('dashboardColumnButton');
-        editInactiveContainer.appendChild(div);
-    }
-
-    if (currentEdit == null) {
-        for (let i = 0; i < inputs.length; i++) {
-            const input = inputs[i];
-            input.value = "";
-        }
-    }
-
-    addDiv = document.createElement('div');
-    addDiv.classList.add('dashboardColumnButton');
-    addDiv.classList.add('dashboardColumnButtonsContent');
-    pElement = document.createElement('p');
-    pElement.innerHTML = "Add Column";
-    addDiv.appendChild(pElement);
-    editInactiveContainer.appendChild(addDiv);
-    
-    addDiv.addEventListener('click', function() {
-        if (editContainer.children.length == 7) {
-            return
-        }
-        //remove first child from inactive
-        editInactiveContainer.removeChild(editInactiveContainer.children[0]);
-        newDiv = document.createElement('div');
-        newDiv.classList.add('dashboardColumnButton');
-        newDiv.classList.add('dashboardColumnButtonsContent');
-        newPElement = document.createElement('p');
-        newPElement.innerHTML = "new column";
-        newDiv.appendChild(newPElement);
-        editContainer.appendChild(newDiv);
-    });
-
-    await Sortable.create(editContainer, {
-        group: "editGroup",
-        animation: 150
-    });
-}
-
-async function openColoumnEdit(tempData, index) {
-    var links = tempData.links
-    var currentColoumnItems = links
-    var linkContainer = document.getElementById('linkContainer');
-    linkContainer.innerHTML = "";
-    const editHeading = document.getElementById('edit_heading');
-    var inputs = document.getElementsByClassName('input_text');
-    Sortable.create(linkContainer, {
-        group: "linkContainer",
-        animation: 150,
+    Sortable.create(dashboardColumnButtonContainer, {
+        group: "columns",
+        animation: 100,
         store: {
-            set : function(sortable) {
-                const newOrder = sortable.toArray();
-                reorderColoumn(links, newOrder)
-            }
-
+            set : function(sortable) { resortDashboardColumns(sortable) }
         }
     });
 
-    for (let i = 0; i < links.length; i++) {
-        const link = links[i];
-        const linkButtonContainer = document.createElement('div');
-        linkButtonContainer.classList.add('linkButton');
-        if (currentLinkSelected == i) {
-            linkButtonContainer.classList.add('linkButtonActivated')
-        }
-        linkButtonContainer.setAttribute("data-id", i);
-        pElement = document.createElement('p');
-        pElement.innerHTML = link.title;
-
-        linkButtonContainer.appendChild(pElement);
-
-        linkButtonContainer.addEventListener('click', function() {
-            if (currentEdit != null) {
-                saveInputData();
-            }
-            currentEdit = {
-                "type" : "row",
-                "coloumn" : index,
-                "link" : i
-            }
-            currentLinkSelected = i;
-            editHeading.innerHTML = "Edit " + link.title;
-            for (let i = 0; i < 3; i++) {
-                const input = inputs[i];
-                switch (i) {
-                    case 0:
-                        input.disabled = false;
-                        input.value = link.title;
-                        break;
-                    case 1:
-                        input.disabled = false;
-                        input.value = link.icon;
-                        break;
-                    case 2:
-                        input.disabled = false;
-                        input.value = link.url;
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            openColoumnEdit(tempData, index)
-        });
-
-        linkContainer.appendChild(linkButtonContainer);
+    for (menuItemIndex in menuItems) {
+        const menuItem = menuItems[menuItemIndex];
+        spawnColoumnButton(menuItem, menuItemIndex);
     }
-    const addLinkButton = document.getElementById('addLinkButton')
-    addLinkButton.style.display = 'none'
-    if (links.length < 7) {
-        addLinkButton.style.display = 'flex'
-        addLinkButton.addEventListener('click', function() {
-            if (currentEdit != null) {
-                saveInputData();
-            }
-            links.push({
-                "title" : "new link",
-                "icon" : "fas fa-link",
-                "url" : "url"
-            });
-            editHeading.innerHTML = "Edit new link";
-            for (let i = 0; i < 3; i++) {
-                const input = inputs[i];
-                switch (i) {
-                    case 0:
-                        input.disabled = false;
-                        input.value = "new link";
-                        break;
-                    case 1:
-                        input.disabled = false;
-                        input.value = "fas fa-link";
-                        break;
-                    case 2:
-                        input.disabled = false;
-                        input.value = "url";
-                        break;
-                    default:
-                        break;
-                }
-            }
-            currentEdit = {
-                "type" : "row",
-                "coloumn" : index,
-                "link" : links.length - 1
-            };
-            const newLinkDiv = document.createElement('div');
-            newLinkDiv.classList.add('linkButton');
-            newLinkDiv.setAttribute("data-id", links.length);
-            const pElement = document.createElement('p');
-            pElement.innerHTML = "new link";
-            newLinkDiv.appendChild(pElement);
-            //append before add button
-            linkContainer.appendChild(newLinkDiv);
-            if (links.length == 7) {
-                //remove add button
-                addLinkButton.style.display = "none"
-            }
-        });
+
+    for (let i = 0; i < 6 - menuItems.length; i++) {
+        spawnUnusedColumnButtonSpace();  
     }
+
+    addColumnButton.addEventListener('click', function() {
+        addNewColumnClick();
+    });
+
+    addInputEventListeners();
+}
+ 
+function addInputEventListeners() {
+    const titleInput = document.getElementById('input_title');
+    const iconInput = document.getElementById('input_icon');
+    const urlInput = document.getElementById('input_url');
+
+    titleInput.addEventListener('input', function() {
+        console.log(titleInput.value);
+        updateTempData(inputTarget, titleInput.value, "title")
+    });
+
+    iconInput.addEventListener('input', function() {
+        console.log(iconInput.value);
+        updateTempData(inputTarget, titleInput.value, "icon")
+    });
+
+    urlInput.addEventListener('input', function() {
+        console.log(urlInput.value);
+        updateTempData(inputTarget, titleInput.value, "url")
+    });
 }
 
-function setInitialColoumnData(data, index) {
-    currentEdit = {
-        "type" : "coloumn",
-        "coloumn" : index,
-        "link" : null
+function updateTempData(inputData, input, inputType) {
+    switch (inputData.type) {
+        case "row":
+            inputData.dataReference[inputType] = input;
+            break;
+        case "column":
+            if (inputType == "icon") {
+                inputData.dataReference["icon_fa"] = input;
+                break;
+            }
+            inputData.dataReference[inputType] = input;
+            break;
+        default:
+            break;
     }
-    const editHeading = document.getElementById('edit_heading');
-    editHeading.innerHTML = "Edit " + data.title;
-    for (let i = 0; i < 3; i++) {
-        const input = inputs[i];
-        switch (i) {
-            case 0:
-                input.disabled = false;
-                input.value = data.title;
-                break;
-            case 1:
-                input.disabled = false;
-                input.value = data.icon_fa;
-                break;
-            case 2:
-                input.disabled = true;
-                input.value = "";
-                break;
-            default:
-                break;
-        }
-    }
+
 }
 
-function saveInputData() {
-    if (currentEdit == null) {
-        return
+function resortDashboardColumns(sortable) {
+    const newOrder = sortable.toArray();
+    let menuItems = tempData.menuItems;
+    let newColumnArray = [];
+    let normalIndex = 0;
+
+    for (stringIndex of newOrder) {
+        const index = parseInt(stringIndex);
+        const dashboardColumn = dashBoardColumnButtonsHTML[index];
+        dashboardColumn.setAttribute("data-id", normalIndex);
+        newColumnArray[normalIndex] = menuItems[index];
+        normalIndex++
     }
 
-    inputs = document.getElementsByClassName('input_text');
-    newTitle = inputs[0].value;
-    newIcon = inputs[1].value;
-    newUrl = inputs[2].value;
-    var coloumnIndex = currentEdit.coloumn
-    coloumn = tempData.menuItems[coloumnIndex]
+    tempData.menuItems = newColumnArray;
+}
 
-    if (currentEdit.type == "coloumn") {
-        coloumn.title = newTitle;
-        coloumn.icon_fa = newIcon;
+function spawnColoumnButton(menuItemData, index) {
+    const dashboardColumnButtonContainer = document.getElementById('dashboardColumnButtons');
+    const title = menuItemData.title;    
+
+    const dashboardColumnButton = document.createElement('div');
+    dashboardColumnButton.className = 'dashboardColumnButtonActive';
+    dashboardColumnButton.setAttribute("data-id", index);
+
+    const dashboardColumnText = document.createElement('p');
+    dashboardColumnText.innerHTML = title;
+
+    dashboardColumnButton.appendChild(dashboardColumnText);
+    dashboardColumnButtonContainer.appendChild(dashboardColumnButton);
+
+    dashboardColumnButton.addEventListener('click', function() {
+        columnButtonClick(dashboardColumnButton, index);
+    });
+    dashBoardColumnButtonsHTML.push(dashboardColumnButton);
+
+    return dashboardColumnButton;
+}
+
+function spawnUnusedColumnButtonSpace() {
+    const dashboardColumnButtonsInactive = document.getElementById('dashboardColumnButtonsInactive');
+
+    const dashboardColumnButton = document.createElement('div');
+    dashboardColumnButton.className = 'dashboardColumnButtonInactive';
+    dashboardColumnButtonsInactive.appendChild(dashboardColumnButton);
+    dashBoardInactiveColumnButtonsHTML.push(dashboardColumnButton);
+}
+
+function addNewColumnClick() {
+    let menuItems = tempData.menuItems;
+    let menuItemsLength = menuItems.length;
+    const inactiveButtonsLength = dashBoardInactiveColumnButtonsHTML.length;
+    const inactiveButtonsContainer = document.getElementById('dashboardColumnButtonsInactive');
+    const dashboardColumnButtonContainer = document.getElementById('dashboardColumnButtonContainer');
+    const addColumnButton = document.getElementById('addColumnButton');
+    //make space for new column button
+
+    if (inactiveButtonsLength > 0) {
+        inactiveButtonsContainer.removeChild(dashBoardInactiveColumnButtonsHTML[0]);
+        dashBoardInactiveColumnButtonsHTML.splice(0, 1);
+        if (inactiveButtonsLength == 1) {
+            inactiveButtonsContainer.style.display = "none";
+        }
     } else {
-        link = coloumn.links[currentEdit.link]
-        if (link == undefined) {
-            link = {
-                "title" : newTitle,
-                "icon" : newIcon,
-                "url" : newUrl
-            }
-            coloumn.links.push(link)
-            return
-        }
-        link.title = newTitle;
-        link.icon = newIcon;
-        link.url = newUrl;
+        dashboardColumnButtonContainer.removeChild(addColumnButton);
     }
 
-    console.log(tempData);
+    data = {
+        "title" : "New Column",
+        "icon_fa" : "fas fa-plus",
+        "links" : []
+    };
 
-    if (currentEdit.type == "coloumn") {
-        spawnDashboardEditWindow(tempData)
-    } else {
-        openColoumnEdit(coloumn, currentEdit.coloumn)
+    const newButton = spawnColoumnButton(data, menuItemsLength);
+    menuItems.push(data);
+    columnButtonClick(newButton, menuItemsLength);
+}
+
+function columnButtonClick(dashboardColumnButton, index){
+    const menuItems = tempData.menuItems;
+    const menuItem = menuItems[index];
+    const rows = menuItem.links;
+
+    activateColumnButton(dashboardColumnButton)
+    const target = {
+        "type" : "column",
+        "HTMLreference" : dashboardColumnButton,
+        "dataReference" : menuItem
+    }
+    setInputs(target, menuItem.title, menuItem.icon_fa);
+
+    clearRows();
+
+    for (rowIndex in rows) {
+        const row = rows[rowIndex];
+        spawnRowButton(row, rowIndex);
+    }
+
+    for (let i = 0; i < 7 - rows.length; i++) {
+        spawnUnusedRowButton();
     }
 }
 
-function reorderColoumn(coloumn, order) {
-    console.log(coloumn);
-    console.log(order);
-}
-
-function syncChanges() {
-    if (currentEdit == null) {
-        return
+function activateColumnButton(dashboardColumnButton) {
+    const preivousActivatedButton = document.getElementsByClassName('dashboardColumnButtonActivated')[0];
+    if (preivousActivatedButton != undefined) {
+        preivousActivatedButton.classList.remove('dashboardColumnButtonActivated');
     }
-    saveInputData()
-    data = structuredClone(tempData)
-    populateData(data)
+
+    dashboardColumnButton.classList.add('dashboardColumnButtonActivated');
 }
 
-function deleteChanges() {
-    currentEdit = null
-    tempData = structuredClone(data)
+function setInputs(target, title, icon, url) {
+    const titleInput = document.getElementById('input_title');
+    const iconInput = document.getElementById('input_icon');
+    const urlInput = document.getElementById('input_url');
+    inputTarget = target;
+
+    if (title != undefined) {
+        titleInput.disabled = false;
+        titleInput.value = title;
+    }
+    
+    if (icon != undefined) {
+        iconInput.disabled = false;
+        iconInput.value = icon;
+    }
+        
+    if (url != undefined) {
+        urlInput.disabled = false;
+        urlInput.value = url;
+    }
+}
+
+function clearRows() {
+    const rowButtonContainer = document.getElementById('dashboardRowButtons');
+    rowButtonContainer.innerHTML = "";
+    const rowButtonContainerInactive = document.getElementById('dashboardRowButtonsInactive');
+    rowButtonContainerInactive.innerHTML = "";
+}
+
+function spawnRowButton(rowData, index) {
+    const rowButtonContainer = document.getElementById('dashboardRowButtons');
+    const rowButtonDiv = document.createElement('div');
+    rowButtonDiv.className = 'dashboardRowButtonActive';
+    rowButtonDiv.setAttribute("data-id", index);
+    rowButtonText = document.createElement('p');
+    rowButtonText.innerHTML = rowData.title;
+    rowButtonDiv.appendChild(rowButtonText);
+
+    rowButtonDiv.addEventListener('click', function() {
+        rowButtonClick(rowButtonDiv, rowData, index);
+    });
+
+    rowButtonContainer.appendChild(rowButtonDiv);
+}
+
+function spawnUnusedRowButton() {
+    const rowButtonContainerInactive = document.getElementById('dashboardRowButtonsInactive');
+    const rowButtonDiv = document.createElement('div');
+    rowButtonDiv.className = 'dashboardRowButtonInactive';
+    rowButtonContainerInactive.appendChild(rowButtonDiv);
+}
+
+function rowButtonClick(rowButton, rowData, index) {
+    activateRowButton(rowButton);
+    const target = {
+        "type" : "row",
+        "HTMLreference" : rowButton,
+        "dataReference" : rowData
+    }
+    inputTarget = target;
+    setInputs(target, rowData.title, rowData.icon, rowData.url);
+}
+
+function activateRowButton(rowButton) {
+    const preivousActivatedButton = document.getElementsByClassName('dashboardRowButtonActivated')[0];
+    if (preivousActivatedButton != undefined) {
+        preivousActivatedButton.classList.remove('dashboardRowButtonActivated');
+    }
+
+    rowButton.classList.add('dashboardRowButtonActivated');
 }
 
 function setEditWindowVisibility(visibility) {
-    editWindow = document.getElementById('newServiceFormContainer')
+    const editWindow = document.getElementById('newServiceFormContainer')
     if (visibility) {
         editWindow.style.display = "flex"
     } else {
         editWindow.style.display = "none"
     }
+}
+
+function saveChangesClick() {
+    menuInfo = structuredClone(tempData);
+    updateJSON();
+}
+
+function deleteChangesClick() {
+    tempData = structuredClone(data);
 }

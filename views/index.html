@@ -36,12 +36,15 @@
                 </div>
                 <div id="dashboardColumnButtonsInactive">
                 </div>
+                <div class="dashboardColumnButtonActive" id="addColumnButton"><p>Add Column</p></div>
             </div>
             <div id="dashboardColumnContent">
                 <div id="dashboardColumnLeft">
-                    <div id="linkContainer">
+                    <div id="dashboardRowButtons">
                     </div>
-                    <div class="linkButton" id="addLinkButton"><p>Add Link</p></div>
+                    <div id="dashboardRowButtonsInactive">
+                    </div>
+                    <div class="dashboardRowButtonActive" id="addRowButton"><p>Add Link</p></div>
                 </div>
                 <div id="dashboardColumnRight">
                     <h2 id="edit_heading">Edit</h2>
@@ -49,8 +52,8 @@
                     <input type="text" id="input_icon" class="input_text" placeholder="Icon" disabled>
                     <input type="text" id="input_url" class="input_text" placeholder="URL" disabled>
                     <div id="edit_buttons">
-                        <input type="button" value="save changes" id="button_save" class="button_edit" onclick="syncChanges()">
-                        <input type="button" value="delete changes" id="button_delete" class="button_edit" onclick="deleteChanges()">
+                        <input type="button" value="save changes" id="button_save" class="button_edit" onclick="saveChangesClick()">
+                        <input type="button" value="delete changes" id="button_delete" class="button_edit" onclick="deleteChangesClick()">
                     </div>
                 </div>
             </div>

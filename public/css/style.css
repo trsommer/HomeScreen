@@ -178,7 +178,7 @@ body {
 
 #newServiceForm {
     width: 1000px;
-    height: 600px;
+    height: 650px;
     background-color: rgba(25, 25, 25, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 10px;
@@ -195,6 +195,7 @@ body {
     display: flex;
     background-color: rgb(171, 171, 171);
     align-items: center;
+    cursor: pointer;
 }
 
 .barTopButton {
@@ -219,75 +220,86 @@ body {
 }
 
 #dashboardColumnButtonContainer {
-    width: 910px;
+    width: 900px;
     display: flex;
-    flex-direction: rowrr;
-    border-bottom: 1px solid white;
+    flex-direction: row;
+    align-items: center;
+    border-bottom: 1px solid #898989;
+    padding-top: 20px;
+    padding-bottom: 20px;
 }
 
 #dashboardColumnButtons {
-    max-width: 795px;
+    max-width: 900px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, 105px);
+    grid-template-columns: repeat(auto-fit, 120px);
     column-gap: 10px;
-    row-gap: 10px;
-    margin-top: 20px;
-    padding-top: 20px;
-    padding-bottom: 20px;
 }
 
 #dashboardColumnButtonsInactive {
-    min-width: 105px;
-    max-width: 795px;
+    min-width: 0;
+    max-width: 900px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, 105px);
+    grid-template-columns: repeat(auto-fit, 120px);
     column-gap: 10px;
     align-items: center;
     margin-left: 10px;
-    padding-top: 20px;
-    padding-bottom: 20px;
-    margin-top: 20px;
 }
 
-.dashboardColumnButton {
-    width: 105px;
-    height: 40px;
+.dashboardColumnButtonActive {
+    width: 120px;
+    height: 50px;
     display: flex;
     justify-content: center;
     text-align: center;
     align-items: center;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    background-color: rgb(44, 44, 44);
+    border-radius: 10px;
+    font-size: 15px;
+    transition: background-color 0.1s ease;
+    cursor: pointer;
+
+}
+
+.dashboardColumnButtonInactive {
+    width: 120px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
     background-color: rgb(14, 14, 14);
     border-radius: 10px;
     font-size: 15px;
-    transition: 0.15s ease;
+    transition: background-color 0.1s ease;
 }
 
-.dashboardColumnButtonsContent {
+#addColumnButton {
     cursor: pointer;
-    background-color: rgb(44, 44, 44) !important;
+    background-color: rgb(14, 14, 14);
+    margin-left: 10px;
+    transition: background-color 0.1s ease;
 }
 
 .dashboardColumnButtonActivated {
-    background-color: rgb(62, 62, 62);
-    cursor: pointer;
+    height: 48px !important;
+    width: 118px !important;
+    border: 1px solid #898989 !important;
 }
 
-.dashboardColumnButtonsContent:hover {
-    background-color: rgb(111, 111, 111);
-    transition: 0.15s ease;
+.dashboardColumnButtonActive:hover {
+    background-color: rgb(62, 62, 62) !important;
+    transition: background-color 0.1s ease;
 }
 
 #dashboardColumnContent {
-    width: 910px;
+    width: 900px;
     height: 70%;
     display: flex;
     flex-direction: row;
 }
 
 #dashboardColumnLeft {
-    width: 30%;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -301,29 +313,54 @@ body {
     align-items: baseline;
 }
 
-.linkButton {
+#dashboardRowButtons {
+    margin-top: 6px;
+}
+
+.dashboardRowButtonActive {
     margin-top: 10px;
-    min-width: 85px;
-    /* margin-bottom: 5px; */
+    width: 120px;
     background-color: rgb(44, 44, 44);
     border-radius: 10px;
-    padding-left: 10px;
-    padding-right: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    height: 45px;
+    transition: background-color 0.1s ease;
 }
 
-.linkButtonActivated {
+.dashboardRowButtonActive:hover {
     background-color: rgb(62, 62, 62);
+    transition: background-color 0.1s ease;
 }
+
+.dashboardRowButtonActivated {
+    height: 43px !important;
+    width: 118px !important;
+    border: 1px solid #898989 !important;
+}
+
+.dashboardRowButtonActive p {
+    margin: 0;
+    font-size: 12px;
+    color: white;
+}
+
+.dashboardRowButtonInactive {
+    margin-top: 10px;
+    width: 120px;
+    background-color: rgb(14, 14, 14);
+    border-radius: 10px;
+    height: 45px;
+}
+
 
 #dashboardColumnRight {
-    width: 70%;
     height: 100%;
     display: flex;
     flex-direction: column;
+    margin-left: 10px;
 }
 
 .input_text {
@@ -362,6 +399,7 @@ body {
     color: white;
     font-size: 16px;
     font-weight: 600;
+    height: 45px;
 }
 
 #addLinkButton {
