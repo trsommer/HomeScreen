@@ -3,6 +3,9 @@ var menuHTMLReference = []
 var newOrderGlobal = []
 var tempData = null
 var currentEdit = null
+var currentColoumnItems = null
+var currentColoumnSelected = null
+var currentLinkSelected = null
 
 async function fetchJSON() {
     // Fetch the JSON file
@@ -20,6 +23,7 @@ function populateData(data) {
     menuItems = data.menuItems
 
     dashBoardContainer = document.getElementById('dashboard-content');
+    dashBoardContainer.innerHTML = ""
 
     for (const coloumnIndex in menuItems) {
         row = menuItems[coloumnIndex];
@@ -169,21 +173,33 @@ async function spawnDashboardEditWindow(data) {
     tempData = structuredClone(data);
     var menuItems = tempData.menuItems
     var editContainer = document.getElementById('dashboardColumnButtons');
+    editContainer.innerHTML = null
     var editInactiveContainer = document.getElementById('dashboardColumnButtonsInactive');
+    editInactiveContainer.innerHTML = null
+    inputs = document.getElementsByClassName('input_text');
 
     for (let i = 0; i < menuItems.length; i++) {
         const menuItem = menuItems[i];
-        div = document.createElement('div');
+        const div = document.createElement('div');
         div.classList.add('dashboardColumnButton');
-        div.classList.add('dashboardColumnButtonsContent');
-        
+        if (currentColoumnSelected == i) {
+            div.classList.add('dashboardColumnButtonActivated')
+        } else {
+            div.classList.add('dashboardColumnButtonsContent');
+        }
         pElement = document.createElement('p');
         pElement.innerHTML = menuItem.title;
 
         div.appendChild(pElement);
 
         div.addEventListener('click', function() {
+            if (currentEdit != null) {
+                saveInputData();
+            }
+            currentColoumnSelected = i;
+            spawnDashboardEditWindow(tempData);
             openColoumnEdit(menuItem, i)
+            setInitialColoumnData(menuItem, i);
         });
 
         editContainer.appendChild(div);
@@ -195,6 +211,13 @@ async function spawnDashboardEditWindow(data) {
         div = document.createElement('div');
         div.classList.add('dashboardColumnButton');
         editInactiveContainer.appendChild(div);
+    }
+
+    if (currentEdit == null) {
+        for (let i = 0; i < inputs.length; i++) {
+            const input = inputs[i];
+            input.value = "";
+        }
     }
 
     addDiv = document.createElement('div');
@@ -226,32 +249,49 @@ async function spawnDashboardEditWindow(data) {
     });
 }
 
-function openColoumnEdit(tempData, index) {
-    links = tempData.links
-    linkContainer = document.getElementById('dashboardColumnLeft');
+async function openColoumnEdit(tempData, index) {
+    var links = tempData.links
+    var currentColoumnItems = links
+    var linkContainer = document.getElementById('linkContainer');
     linkContainer.innerHTML = "";
-    inputs = document.getElementsByClassName('input_text');
-    currentEdit = {
-        "type" : "coloumn",
-        "coloumn" : index,
-        "link" : null
-    }
+    const editHeading = document.getElementById('edit_heading');
+    var inputs = document.getElementsByClassName('input_text');
+    Sortable.create(linkContainer, {
+        group: "linkContainer",
+        animation: 150,
+        store: {
+            set : function(sortable) {
+                const newOrder = sortable.toArray();
+                reorderColoumn(links, newOrder)
+            }
+
+        }
+    });
 
     for (let i = 0; i < links.length; i++) {
         const link = links[i];
-        div = document.createElement('div');
+        const linkButtonContainer = document.createElement('div');
+        linkButtonContainer.classList.add('linkButton');
+        if (currentLinkSelected == i) {
+            linkButtonContainer.classList.add('linkButtonActivated')
+        }
+        linkButtonContainer.setAttribute("data-id", i);
         pElement = document.createElement('p');
         pElement.innerHTML = link.title;
 
-        div.appendChild(pElement);
+        linkButtonContainer.appendChild(pElement);
 
-        div.addEventListener('click', function() {
+        linkButtonContainer.addEventListener('click', function() {
+            if (currentEdit != null) {
+                saveInputData();
+            }
             currentEdit = {
                 "type" : "row",
                 "coloumn" : index,
                 "link" : i
             }
-        
+            currentLinkSelected = i;
+            editHeading.innerHTML = "Edit " + link.title;
             for (let i = 0; i < 3; i++) {
                 const input = inputs[i];
                 switch (i) {
@@ -272,23 +312,25 @@ function openColoumnEdit(tempData, index) {
                 }
             }
 
-            
+            openColoumnEdit(tempData, index)
         });
 
-        linkContainer.appendChild(div);
+        linkContainer.appendChild(linkButtonContainer);
     }
-
+    const addLinkButton = document.getElementById('addLinkButton')
+    addLinkButton.style.display = 'none'
     if (links.length < 7) {
-        addDiv = document.createElement('div');
-        pElement = document.createElement('p');
-        pElement.innerHTML = "new link";
-
-        addDiv.addEventListener('click', function() {
+        addLinkButton.style.display = 'flex'
+        addLinkButton.addEventListener('click', function() {
+            if (currentEdit != null) {
+                saveInputData();
+            }
             links.push({
                 "title" : "new link",
                 "icon" : "fas fa-link",
                 "url" : "url"
             });
+            editHeading.innerHTML = "Edit new link";
             for (let i = 0; i < 3; i++) {
                 const input = inputs[i];
                 switch (i) {
@@ -313,22 +355,40 @@ function openColoumnEdit(tempData, index) {
                 "coloumn" : index,
                 "link" : links.length - 1
             };
+            const newLinkDiv = document.createElement('div');
+            newLinkDiv.classList.add('linkButton');
+            newLinkDiv.setAttribute("data-id", links.length);
+            const pElement = document.createElement('p');
+            pElement.innerHTML = "new link";
+            newLinkDiv.appendChild(pElement);
+            //append before add button
+            linkContainer.appendChild(newLinkDiv);
+            if (links.length == 7) {
+                //remove add button
+                addLinkButton.style.display = "none"
+            }
         });
-
-        addDiv.appendChild(pElement);
-        linkContainer.appendChild(addDiv);
     }
+}
 
+function setInitialColoumnData(data, index) {
+    currentEdit = {
+        "type" : "coloumn",
+        "coloumn" : index,
+        "link" : null
+    }
+    const editHeading = document.getElementById('edit_heading');
+    editHeading.innerHTML = "Edit " + data.title;
     for (let i = 0; i < 3; i++) {
         const input = inputs[i];
         switch (i) {
             case 0:
                 input.disabled = false;
-                input.value = tempData.title;
+                input.value = data.title;
                 break;
             case 1:
                 input.disabled = false;
-                input.value = tempData.icon_fa;
+                input.value = data.icon_fa;
                 break;
             case 2:
                 input.disabled = true;
@@ -357,6 +417,15 @@ function saveInputData() {
         coloumn.icon_fa = newIcon;
     } else {
         link = coloumn.links[currentEdit.link]
+        if (link == undefined) {
+            link = {
+                "title" : newTitle,
+                "icon" : newIcon,
+                "url" : newUrl
+            }
+            coloumn.links.push(link)
+            return
+        }
         link.title = newTitle;
         link.icon = newIcon;
         link.url = newUrl;
@@ -364,5 +433,37 @@ function saveInputData() {
 
     console.log(tempData);
 
-    openColoumnEdit(coloumn, coloumnIndex);
+    if (currentEdit.type == "coloumn") {
+        spawnDashboardEditWindow(tempData)
+    } else {
+        openColoumnEdit(coloumn, currentEdit.coloumn)
+    }
+}
+
+function reorderColoumn(coloumn, order) {
+    console.log(coloumn);
+    console.log(order);
+}
+
+function syncChanges() {
+    if (currentEdit == null) {
+        return
+    }
+    saveInputData()
+    data = structuredClone(tempData)
+    populateData(data)
+}
+
+function deleteChanges() {
+    currentEdit = null
+    tempData = structuredClone(data)
+}
+
+function setEditWindowVisibility(visibility) {
+    editWindow = document.getElementById('newServiceFormContainer')
+    if (visibility) {
+        editWindow.style.display = "flex"
+    } else {
+        editWindow.style.display = "none"
+    }
 }
