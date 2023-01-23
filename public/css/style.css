@@ -24,9 +24,10 @@ body {
 #navbar {
     width: 100%;
     height: 50px;
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
+    backdrop-filter: blur(8px);
 }
 
 #dashboard {
@@ -297,6 +298,7 @@ body {
     height: 70%;
     display: flex;
     flex-direction: row;
+    margin-top: 10px;
 }
 
 #dashboardColumnLeft {
@@ -313,12 +315,8 @@ body {
     align-items: baseline;
 }
 
-#dashboardRowButtons {
-    margin-top: 6px;
-}
-
 .dashboardRowButtonActive {
-    margin-top: 10px;
+    margin-bottom: 10px;
     width: 120px;
     background-color: rgb(44, 44, 44);
     border-radius: 10px;
@@ -345,10 +343,11 @@ body {
     margin: 0;
     font-size: 12px;
     color: white;
+    text-align: center;
 }
 
 .dashboardRowButtonInactive {
-    margin-top: 10px;
+    margin-bottom: 10px;
     width: 120px;
     background-color: rgb(14, 14, 14);
     border-radius: 10px;
@@ -383,11 +382,23 @@ body {
 #button_save {
     background-color: rgb(75, 121, 63);
     margin-right: 5px;
+    transition: background-color 0.1s ease;
 }
 
 #button_delete {
     background-color: rgb(131, 68, 68);
     margin-left: 5px;
+    transition: background-color 0.1s ease;
+}
+
+#button_save:hover {
+    background-color: rgb(60, 139, 40);
+    transition: background-color 0.1s ease;
+}
+
+#button_delete:hover {
+    background-color: rgb(159, 32, 32);
+    transition: background-color 0.1s ease;
 }
 
 .button_edit {
@@ -402,6 +413,41 @@ body {
     height: 45px;
 }
 
-#addLinkButton {
+#edit_buttons {
+    margin-bottom: 10px;
+    display: flex;
+    width: 320px;
+}
+
+#edit_heading {
+    margin: 0;
+}
+
+#edit_heading_container {
+    height: 45px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#addRowButton {
+    background-color: rgb(14, 14, 14);
     display: none;
+    transition: background-color 0.1s ease;
+}
+
+#addRowButton:hover {
+    background-color: rgb(62, 62, 62);
+    transition: background-color 0.1s ease;
+}
+
+#button_delete_entity {
+    background-color: rgb(131, 68, 68);
+    width: 320px;
+    transition: background-color 0.1s ease;
+}
+
+#button_delete_entity:hover {
+    background-color: rgb(159, 32, 32);
+    transition: background-color 0.1s ease;
 }

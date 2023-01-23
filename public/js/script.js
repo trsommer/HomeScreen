@@ -5,6 +5,7 @@ var tempData = null
 var inputTarget = null
 var dashBoardColumnButtonsHTML = []
 var dashBoardInactiveColumnButtonsHTML = []
+currentEntity = null
 
 async function fetchJSON() {
     // Fetch the JSON file
@@ -182,6 +183,8 @@ async function spawnDashboardEditWindow(data) {
         }
     });
 
+    clearColumns();
+
     for (menuItemIndex in menuItems) {
         const menuItem = menuItems[menuItemIndex];
         spawnColoumnButton(menuItem, menuItemIndex);
@@ -191,13 +194,17 @@ async function spawnDashboardEditWindow(data) {
         spawnUnusedColumnButtonSpace();  
     }
 
-    addColumnButton.addEventListener('click', function() {
-        addNewColumnClick();
-    });
-
     addInputEventListeners();
 }
- 
+
+function clearColumns() {
+    const dashboardColumnButtonContainer = document.getElementById('dashboardColumnButtons');
+    const dashboardColumnButtonsInactive = document.getElementById('dashboardColumnButtonsInactive');
+    
+    dashboardColumnButtonContainer.innerHTML = "";
+    dashboardColumnButtonsInactive.innerHTML = "";
+}
+
 function addInputEventListeners() {
     const titleInput = document.getElementById('input_title');
     const iconInput = document.getElementById('input_icon');
@@ -210,12 +217,12 @@ function addInputEventListeners() {
 
     iconInput.addEventListener('input', function() {
         console.log(iconInput.value);
-        updateTempData(inputTarget, titleInput.value, "icon")
+        updateTempData(inputTarget, iconInput.value, "icon")
     });
 
     urlInput.addEventListener('input', function() {
         console.log(urlInput.value);
-        updateTempData(inputTarget, titleInput.value, "url")
+        updateTempData(inputTarget, urlInput.value, "url")
     });
 }
 
@@ -316,9 +323,12 @@ function addNewColumnClick() {
 }
 
 function columnButtonClick(dashboardColumnButton, index){
+    const rowButtonContainer = document.getElementById('dashboardRowButtons');
     const menuItems = tempData.menuItems;
     const menuItem = menuItems[index];
     const rows = menuItem.links;
+    const addRowButton = document.getElementById('addRowButton');
+    const deleteEntityButton = document.getElementById('button_delete_entity');
 
     activateColumnButton(dashboardColumnButton)
     const target = {
@@ -328,6 +338,14 @@ function columnButtonClick(dashboardColumnButton, index){
     }
     setInputs(target, menuItem.title, menuItem.icon_fa);
 
+    Sortable.create(rowButtonContainer, {
+        group: "rows",
+        animation: 100,
+        store: {
+            set : function(sortable) { resortDashboardRows(sortable, rows, index) }
+        }
+    });
+
     clearRows();
 
     for (rowIndex in rows) {
@@ -335,9 +353,48 @@ function columnButtonClick(dashboardColumnButton, index){
         spawnRowButton(row, rowIndex);
     }
 
-    for (let i = 0; i < 7 - rows.length; i++) {
+    for (let i = 0; i < 6 - rows.length; i++) {
         spawnUnusedRowButton();
     }
+
+
+    if (rows.length < 7) {
+        addRowButton.style.display = "flex";
+        //removes all previous event listeners
+        cloneAddRowButton = addRowButton.cloneNode(true);
+        addRowButton.replaceWith(cloneAddRowButton);
+
+        document.getElementById('addRowButton').addEventListener('click', function() {
+            addNewRowClick(rows);
+        });
+    } else {
+        addRowButton.style.display = "none";
+    }
+
+
+
+    setCurrentEntity(menuItem, menuItems, "column");
+
+    deleteEntityButton.addEventListener('click', function() {
+        deleteEntityClick(menuItem, menuItems);
+    });
+}
+
+function resortDashboardRows(sortable, rowData, columnIndex) {
+    const newOrder = sortable.toArray();
+    const rowContainer = document.getElementById('dashboardRowButtons');
+    const rows = rowContainer.children;
+    let newRows = [];
+    let normalIndex = 0;
+
+    for (indexString of newOrder) {
+        const index = parseInt(indexString);
+        const row = rows[normalIndex];
+        row.setAttribute("data-id", normalIndex);
+        normalIndex++;
+        newRows.push(rowData[index]);
+    }
+    tempData.menuItems[columnIndex].links = newRows;
 }
 
 function activateColumnButton(dashboardColumnButton) {
@@ -371,6 +428,32 @@ function setInputs(target, title, icon, url) {
     }
 }
 
+function addNewRowClick(data) {
+    const activeRowButtons = document.getElementById('dashboardRowButtons');
+    const inactiveRowButtons = document.getElementById('dashboardRowButtonsInactive');
+    const addRowButton = document.getElementById('addRowButton');
+
+    if (inactiveRowButtons.children.length > 0) {
+        inactiveRowButtons.removeChild(inactiveRowButtons.children[0]);
+    } else {
+        addRowButton.style.display = "none";
+    }
+
+    const newRowData = {
+        "title" : "New Row",
+        "icon" : "fas fa-plus",
+        "url" : ""
+    };
+
+    const rowIndex = activeRowButtons.children.length
+
+    newRow = spawnRowButton(newRowData, rowIndex);
+
+    rowButtonClick(newRow, newRowData, rowIndex);
+
+    data.push(newRowData);
+}
+
 function clearRows() {
     const rowButtonContainer = document.getElementById('dashboardRowButtons');
     rowButtonContainer.innerHTML = "";
@@ -392,6 +475,8 @@ function spawnRowButton(rowData, index) {
     });
 
     rowButtonContainer.appendChild(rowButtonDiv);
+
+    return rowButtonDiv;
 }
 
 function spawnUnusedRowButton() {
@@ -402,14 +487,21 @@ function spawnUnusedRowButton() {
 }
 
 function rowButtonClick(rowButton, rowData, index) {
+    const deleteEntityButton = document.getElementById('button_delete_entity');
     activateRowButton(rowButton);
+
     const target = {
         "type" : "row",
         "HTMLreference" : rowButton,
         "dataReference" : rowData
     }
+
+    const entityData = rowData
+
     inputTarget = target;
     setInputs(target, rowData.title, rowData.icon, rowData.url);
+
+    setCurrentEntity(entityData, null, "row");
 }
 
 function activateRowButton(rowButton) {
@@ -425,6 +517,7 @@ function setEditWindowVisibility(visibility) {
     const editWindow = document.getElementById('newServiceFormContainer')
     if (visibility) {
         editWindow.style.display = "flex"
+        dragElement(document.getElementById("newServiceFormContainer"));
     } else {
         editWindow.style.display = "none"
     }
@@ -433,8 +526,43 @@ function setEditWindowVisibility(visibility) {
 function saveChangesClick() {
     menuInfo = structuredClone(tempData);
     updateJSON();
+
+    populateData(menuInfo);
 }
 
 function deleteChangesClick() {
     tempData = structuredClone(data);
+}
+
+function setCurrentEntity(entity, parent, type) {
+    switch (type) {
+        case "column":
+            currentEntity = {
+                "entity" : entity,
+                "parent" : parent,
+                "type" : type
+            }
+            break;
+        case "row":
+            const newParent = currentEntity.entity.links
+            currentEntity = {
+                "entity" : entity,
+                "parent" : newParent,
+                "type" : type
+            }
+        default:
+            break;
+    }
+}
+
+function deleteEntityClick() {
+    if (currentEntity == undefined || currentEntity == null) {
+        return;
+    }
+
+    const parent = currentEntity.parent;
+    const entity = currentEntity.entity;
+    const index = parent.indexOf(entity);
+
+    parent.splice(index, 1);
 }

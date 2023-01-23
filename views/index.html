@@ -10,6 +10,7 @@
     crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="js/Sortable.js"></script>
     <script src="js/script.js"></script>
+    <script src="js/draggable.js"></script>
     <title>Home Screen</title>
 </head>
 <body onload="createDashboard()">
@@ -36,7 +37,7 @@
                 </div>
                 <div id="dashboardColumnButtonsInactive">
                 </div>
-                <div class="dashboardColumnButtonActive" id="addColumnButton"><p>Add Column</p></div>
+                <div class="dashboardColumnButtonActive" id="addColumnButton" onclick="addNewColumnClick()"><p>Add Column</p></div>
             </div>
             <div id="dashboardColumnContent">
                 <div id="dashboardColumnLeft">
@@ -47,7 +48,9 @@
                     <div class="dashboardRowButtonActive" id="addRowButton"><p>Add Link</p></div>
                 </div>
                 <div id="dashboardColumnRight">
-                    <h2 id="edit_heading">Edit</h2>
+                    <div id="edit_heading_container">
+                        <h2 id="edit_heading">Edit</h2>
+                    </div>
                     <input type="text" id="input_title" class="input_text" placeholder="Title" disabled>
                     <input type="text" id="input_icon" class="input_text" placeholder="Icon" disabled>
                     <input type="text" id="input_url" class="input_text" placeholder="URL" disabled>
@@ -55,6 +58,7 @@
                         <input type="button" value="save changes" id="button_save" class="button_edit" onclick="saveChangesClick()">
                         <input type="button" value="delete changes" id="button_delete" class="button_edit" onclick="deleteChangesClick()">
                     </div>
+                    <input type="button" value="delete entity" id="button_delete_entity" class="button_edit">
                 </div>
             </div>
         </div>
