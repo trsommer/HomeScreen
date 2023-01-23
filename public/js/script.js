@@ -165,7 +165,7 @@ async function updateJSON() {
 async function createDashboard() {
     const data = await fetchJSON();
     populateData(data);
-    await addDragAndDrop();
+    //await addDragAndDrop();
     await spawnDashboardEditWindow(data);
 }
 

@@ -1,1 +1,0 @@
-docker run -d -p 8724:8724 -v /home/debian2/other/homeScreen/public:/usr/src/app/public trsommer/homescreen
