@@ -245,20 +245,20 @@ function updateTempData(inputData, input, inputType) {
 }
 
 function resortDashboardColumns(sortable) {
-    const newOrder = sortable.toArray();
+    const dashBoardColumnButtons = document.getElementById('dashboardColumnButtons').children;
     let menuItems = tempData.menuItems;
-    let newColumnArray = [];
+    let tempMenuItems = structuredClone(menuItems);
     let normalIndex = 0;
 
-    for (stringIndex of newOrder) {
-        const index = parseInt(stringIndex);
-        const dashboardColumn = dashBoardColumnButtonsHTML[index];
+    for (dashboardColumn of dashBoardColumnButtons) {
+        dataID = parseInt(dashboardColumn.getAttribute("data-id"));
+
+        menuItems[normalIndex] = tempMenuItems[dataID];
+
         dashboardColumn.setAttribute("data-id", normalIndex);
-        newColumnArray[normalIndex] = menuItems[index];
         normalIndex++
     }
 
-    tempData.menuItems = newColumnArray;
 }
 
 function spawnColoumnButton(menuItemData, index) {
@@ -276,7 +276,7 @@ function spawnColoumnButton(menuItemData, index) {
     dashboardColumnButtonContainer.appendChild(dashboardColumnButton);
 
     dashboardColumnButton.addEventListener('click', function() {
-        columnButtonClick(dashboardColumnButton, index);
+        columnButtonClick(dashboardColumnButton);
     });
     dashBoardColumnButtonsHTML.push(dashboardColumnButton);
 
@@ -319,10 +319,11 @@ function addNewColumnClick() {
 
     const newButton = spawnColoumnButton(data, menuItemsLength);
     menuItems.push(data);
-    columnButtonClick(newButton, menuItemsLength);
+    columnButtonClick(newButton);
 }
 
-function columnButtonClick(dashboardColumnButton, index){
+function columnButtonClick(dashboardColumnButton){
+    index = parseInt(dashboardColumnButton.getAttribute("data-id"));
     const rowButtonContainer = document.getElementById('dashboardRowButtons');
     const menuItems = tempData.menuItems;
     const menuItem = menuItems[index];
@@ -373,7 +374,7 @@ function columnButtonClick(dashboardColumnButton, index){
 
 
 
-    setCurrentEntity(menuItem, menuItems, "column");
+    setCurrentEntity(menuItem, menuItems, "column", index);
 
     deleteEntityButton.addEventListener('click', function() {
         deleteEntityClick(menuItem, menuItems);
@@ -381,20 +382,20 @@ function columnButtonClick(dashboardColumnButton, index){
 }
 
 function resortDashboardRows(sortable, rowData, columnIndex) {
-    const newOrder = sortable.toArray();
-    const rowContainer = document.getElementById('dashboardRowButtons');
-    const rows = rowContainer.children;
-    let newRows = [];
+    const rowContainer = document.getElementById('dashboardRowButtons').children;
+    const tempRows = structuredClone(rowData);
     let normalIndex = 0;
 
-    for (indexString of newOrder) {
-        const index = parseInt(indexString);
-        const row = rows[normalIndex];
-        row.setAttribute("data-id", normalIndex);
+    for (rowButton of rowContainer) {
+        var dataId = parseInt(rowButton.getAttribute("data-id"));
+
+        rowData[normalIndex] = tempRows[dataId];
+            
+        rowButton.setAttribute("data-id", normalIndex);
         normalIndex++;
-        newRows.push(rowData[index]);
     }
-    tempData.menuItems[columnIndex].links = newRows;
+
+
 }
 
 function activateColumnButton(dashboardColumnButton) {
@@ -415,16 +416,25 @@ function setInputs(target, title, icon, url) {
     if (title != undefined) {
         titleInput.disabled = false;
         titleInput.value = title;
+    } else {
+        titleInput.disabled = true;
+        titleInput.value = "";
     }
     
     if (icon != undefined) {
         iconInput.disabled = false;
         iconInput.value = icon;
+    } else {
+        iconInput.disabled = true;
+        iconInput.value = "";
     }
         
     if (url != undefined) {
         urlInput.disabled = false;
         urlInput.value = url;
+    } else {
+        urlInput.disabled = true;
+        urlInput.value = "";
     }
 }
 
@@ -501,7 +511,7 @@ function rowButtonClick(rowButton, rowData, index) {
     inputTarget = target;
     setInputs(target, rowData.title, rowData.icon, rowData.url);
 
-    setCurrentEntity(entityData, null, "row");
+    setCurrentEntity(entityData, null, "row", null);
 }
 
 function activateRowButton(rowButton) {
@@ -534,21 +544,29 @@ function deleteChangesClick() {
     tempData = structuredClone(data);
 }
 
-function setCurrentEntity(entity, parent, type) {
+function setCurrentEntity(entity, parent, type, columnIndex) {
     switch (type) {
         case "column":
             currentEntity = {
                 "entity" : entity,
                 "parent" : parent,
-                "type" : type
+                "type" : type,
+                "columnIndex" : columnIndex
             }
             break;
         case "row":
-            const newParent = currentEntity.entity.links
+            var newParent;
+            if (currentEntity.type == "column") {
+                newParent = currentEntity.entity.links
+            } else {
+                newParent = currentEntity.parent
+            }
+            columnIndex = currentEntity.columnIndex
             currentEntity = {
                 "entity" : entity,
                 "parent" : newParent,
-                "type" : type
+                "type" : type,
+                "columnIndex" : columnIndex
             }
         default:
             break;
@@ -560,9 +578,23 @@ function deleteEntityClick() {
         return;
     }
 
+    const HTMLColumnContainer = document.getElementById('dashboardColumnButtons');
     const parent = currentEntity.parent;
     const entity = currentEntity.entity;
     const index = parent.indexOf(entity);
+    const type = currentEntity.type;
 
     parent.splice(index, 1);
+    var columnIndex = currentEntity.columnIndex;
+
+    if (type == "column") {
+        columnIndex = 0;
+    }
+    columnButton = HTMLColumnContainer.children[columnIndex];
+    columnButtonClick(columnButton);
+
+    if (type == "column") {
+        HTMLColumnContainer.removeChild(HTMLColumnContainer.children[index]);
+        spawnUnusedColumnButtonSpace();
+    }
 }
