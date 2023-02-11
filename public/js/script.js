@@ -58,7 +58,7 @@ function populateData(data) {
             linkHTML.href = item.url;
             dataId = coloumnIndex + "_item_" + itemIndex;
             linkHTML.setAttribute("data-id", dataId);
-
+            linkHTML.setAttribute("target", "_blank");
             itemContentContainer = document.createElement('div');
             itemContentContainer.className = 'column_item_content';
 
